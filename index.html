@@ -87,15 +87,6 @@
 
     legend.addTo(mymap);
 
-		$.getJSON("stops.geojson",function(data){
-			L.geoJson(data, {
-				pointToLayer: function(feature, latlng){
-					var marker = L.circleMarker(latlng, {radius: 1, color: 'blue'});
-					marker.bindPopup("Routes served: " + feature.properties.Routes).addTo(mymap);
-				}
-			}).addTo(mymap);
-		});
-
     $.getJSON("PierceCensus.json",function(data){
       var geojson
       function highlightFeature(e) {
@@ -133,6 +124,15 @@
       geojson = L.geoJson(data, {
         style: style,
         onEachFeature: onEachFeature
+      }).addTo(mymap);
+    });
+
+    $.getJSON("stops.geojson",function(data){
+      L.geoJson(data, {
+        pointToLayer: function(feature, latlng){
+          var marker = L.circleMarker(latlng, {radius: 1, color: 'blue'});
+          marker.bindPopup("Routes served: " + feature.properties.Routes).addTo(mymap);
+        }
       }).addTo(mymap);
     });
   </script>
