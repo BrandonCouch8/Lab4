@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<title>Lab 4</title>
+	<!-- CSS -->
+  <link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"/>
+
+
+	<!-- the Leaflet JavaScript library -->
+	<script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+	<script src= "https://cdn.jsdelivr.net/npm/leaflet-legend@1.0.2/leaflet-legend.min.js"></script>
+
+
+</head>
+
+<body>
+  <h1>Title</h1>
+  <div id="map1"></div>
+
+  <script>
+		var mymap = L.map('map1').setView([47.25, -122.44], 12);
+		var basemap = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png', {
+			attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+		}).addTo(mymap);
+
+    function getColor(d) {
+    return d > 8000 ? '#800026' :
+           d > 7000  ? '#BD0026' :
+           d > 6000  ? '#E31A1C' :
+           d > 5000  ? '#FC4E2A' :
+           d > 4000 ? '#FD8D3C' :
+           d > 3000 ? '#FEB24C' :
+           d > 2000 ? '#FED976' :
+                      '#FFEDA0';
+    }
+
+    function style(feature) {
+      return {
+          fillColor: getColor(feature.properties.PopulationTotal),
+          weight: 2,
+          opacity: 1,
+          color: 'white',
+          dashArray: '3',
+          fillOpacity: 0.7
+      };
+    }
+
+
+		$.getJSON("stops.geojson",function(data){
+			L.geoJson(data, {
+				pointToLayer: function(feature, latlng){
+					var marker = L.circleMarker(latlng, {radius: 1, color: 'blue'});
+					marker.bindPopup("Routes served: " + feature.properties.Routes).addTo(mymap);
+				}
+			}).addTo(mymap);
+		});
+
+    $.getJSON("PierceCensus.json",function(data){
+      var geojson
+      function highlightFeature(e) {
+        var layer = e.target;
+
+        layer.setStyle({
+            weight: 5,
+            color: '#666',
+            dashArray: '',
+            fillOpacity: 0.7
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            layer.bringToFront();
+        }
+      }
+
+      function resetHighlight(e) {
+          geojson.resetStyle(e.target);
+      }
+
+      function zoomToFeature(e) {
+        mymap.fitBounds(e.target.getBounds());
+      }
+
+      function onEachFeature(feature, layer) {
+        layer.on({
+            mouseover: highlightFeature,
+            mouseout: resetHighlight,
+            click: zoomToFeature
+        });
+      }
+      geojson = L.geoJson(data, {
+        style: style,
+        onEachFeature: onEachFeature
+      }).addTo(mymap);
+    });
+  </script>
+</body>
