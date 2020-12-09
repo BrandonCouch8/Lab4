@@ -29,13 +29,13 @@
 		}).addTo(mymap);
 
     function getColor(d) {
-    return d > 8000 ? '#800026' :
-           d > 7000  ? '#BD0026' :
-           d > 6000  ? '#E31A1C' :
-           d > 5000  ? '#FC4E2A' :
-           d > 4000 ? '#FD8D3C' :
-           d > 3000 ? '#FEB24C' :
-           d > 2000 ? '#FED976' :
+    return d > 7000 ? '#800026' :
+           d > 6000  ? '#BD0026' :
+           d > 5000  ? '#E31A1C' :
+           d > 4000  ? '#FC4E2A' :
+           d > 3000 ? '#FD8D3C' :
+           d > 2000 ? '#FEB24C' :
+           d > 1000 ? '#FED976' :
                       '#FFEDA0';
     }
 
@@ -50,6 +50,42 @@
       };
     }
 
+    var info = L.control();
+
+    info.onAdd = function (mymap) {
+        this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+        this.update();
+        return this._div;
+    };
+
+    // method that we will use to update the control based on feature properties passed
+    info.update = function (props) {
+        this._div.innerHTML = '<h4>Census Tract Population</h4>' +  (props ?
+            props.PopulationTotal + ' people'
+            : 'Hover over a tract');
+    };
+
+    info.addTo(mymap);
+
+    var legend = L.control({position: 'bottomright'});
+
+    legend.onAdd = function (mymap) {
+
+        var div = L.DomUtil.create('div', 'info legend'),
+            grades = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000],
+            labels = [];
+
+        // loop through our density intervals and generate a label with a colored square for each interval
+        for (var i = 0; i < grades.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        }
+
+        return div;
+    };
+
+    legend.addTo(mymap);
 
 		$.getJSON("stops.geojson",function(data){
 			L.geoJson(data, {
@@ -75,10 +111,12 @@
         if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
             layer.bringToFront();
         }
+        info.update(layer.feature.properties);
       }
 
       function resetHighlight(e) {
           geojson.resetStyle(e.target);
+          info.update();
       }
 
       function zoomToFeature(e) {
