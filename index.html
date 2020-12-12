@@ -20,31 +20,33 @@
 </head>
 
 <body>
-  <h1>Title</h1>
-	<div id="map2"></div>
+  <h1>Lab 4 - Density of Bus Stops and Population</h1>
+	<div id="map1"></div>
+	<h2>Bus Stop Heat Map</h2>
+	<p>Where are all the bus stops in the Tacoma? Looking at this heatmap, we can see that most of the bus stops are concentrated downtown, just west of the Port of Tacoma, and tend to become more spread out further away. Some areas where many lines converge, such as along busy streets and intersections, may have a higher concentration of stops. Zoom in on a stop and click on it to find out which routes it serves!</p>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYnJhbmRvbmNvdWNoOCIsImEiOiJja2h2NHNpcW4xaXJhMnhtanQ5NHp2ZWppIn0.SLSInhDEagBT3c0do7OQag';
-    var map2 = new mapboxgl.Map({
-      container: 'map2',
+    var map1 = new mapboxgl.Map({
+      container: 'map1',
       style:  'mapbox://styles/mapbox/light-v10',
       center: [-122.4443, 47.2529],
       zoom: 10
     });
 
-    map2.on('load', function() {
-      map2.addSource('stops', {
+    map1.on('load', function() {
+      map1.addSource('stops', {
         type: 'geojson',
         data: 'stops.geojson'
       });
 
-			map2.addSource('routes', {
+			map1.addSource('routes', {
 				"type": "geojson",
 				"data": "Bus_Routes.geojson"
 			});
 
 
       // add heatmap layer here
-      map2.addLayer({
+      map1.addLayer({
         id: 'stops-heat',
         type: 'heatmap',
         source: 'stops',
@@ -87,7 +89,7 @@
         }
       });
       // add circle layer here
-      map2.addLayer({
+      map1.addLayer({
         id: 'stops-point',
         type: 'circle',
         source: 'stops',
@@ -107,7 +109,7 @@
         }
       });
 
-			map2.addLayer({
+			map1.addLayer({
 				id: 'routes-layer',
 				type: 'line',
 				source: 'routes',
@@ -121,28 +123,30 @@
 				}
 			});
 
-			map2.on('mouseenter', 'stops-point', function () {
-				map2.getCanvas().style.cursor = 'pointer';
+			map1.on('mouseenter', 'stops-point', function () {
+				map1.getCanvas().style.cursor = 'pointer';
 			});
 
-			map2.on('mouseleave', 'stops-point', function () {
-				map2.getCanvas().style.cursor = '';
+			map1.on('mouseleave', 'stops-point', function () {
+				map1.getCanvas().style.cursor = '';
 			});
 
-      map2.on('click', 'stops-point', function(e) {
+      map1.on('click', 'stops-point', function(e) {
         new mapboxgl.Popup()
           .setLngLat(e.features[0].geometry.coordinates)
           .setHTML('<b>Routes:</b> ' + e.features[0].properties.Routes)
-          .addTo(map2);
+          .addTo(map1);
       });
     });
   </script>
-  <div id="map1"></div>
+  <div id="map2"></div>
+	<h2>Map 2: Distribution of Stops through Census Tracts</h2>
+	<p>Here is a map of bus stops combined with a choropleth map displaying the total population of each census tract in Pierce County. Here, we can see that a lot of bus stops tend to be in areas with a higher population. However, downtown where there are a lot of stops, there aren't as many people living nearby. This is likely because that area is mostly commercial. That would explain why there are more bus stops in that area, so that people from neighborhoods further out can commute to work downtown.</p>
   <script>
-		var mymap = L.map('map1').setView([47.25, -122.44], 12);
+		var map2 = L.map('map2').setView([47.25, -122.44], 12);
 		var basemap = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png', {
 			attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-		}).addTo(mymap);
+		}).addTo(map2);
 
     function getColor(d) {
     return d > 7000 ? '#800026' :
@@ -168,7 +172,7 @@
 
     var info = L.control();
 
-    info.onAdd = function (mymap) {
+    info.onAdd = function (map2) {
         this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
         this.update();
         return this._div;
@@ -181,11 +185,11 @@
             : 'Hover over a tract');
     };
 
-    info.addTo(mymap);
+    info.addTo(map2);
 
     var legend = L.control({position: 'bottomright'});
 
-    legend.onAdd = function (mymap) {
+    legend.onAdd = function (map2) {
 
         var div = L.DomUtil.create('div', 'info legend'),
             grades = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000],
@@ -201,7 +205,7 @@
         return div;
     };
 
-    legend.addTo(mymap);
+    legend.addTo(map2);
 
     $.getJSON("PierceCensus.json",function(data){
       var geojson
@@ -227,7 +231,7 @@
       }
 
       function zoomToFeature(e) {
-        mymap.fitBounds(e.target.getBounds());
+        map2.fitBounds(e.target.getBounds());
       }
 
       function onEachFeature(feature, layer) {
@@ -240,16 +244,32 @@
       geojson = L.geoJson(data, {
         style: style,
         onEachFeature: onEachFeature
-      }).addTo(mymap);
+      }).addTo(map2);
     });
+
+		$.getJSON("Bus_Routes.geojson",function(data){
+			L.geoJson(data, {
+							pointToLayer: function(feature, latlng){
+								var marker = L.marker(latlng);
+									marker.bindPopup("Route " + feature.properties.Designator + "<br>" + feature.properties.line_name).addTo(map2);
+									return route;
+							}
+					}).addTo(map2);
+			});
 
     $.getJSON("stops.geojson",function(data){
       L.geoJson(data, {
         pointToLayer: function(feature, latlng){
           var marker = L.circleMarker(latlng, {radius: 1, color: 'blue'});
-          marker.bindPopup("Routes served: " + feature.properties.Routes).addTo(mymap);
+          marker.bindPopup("Routes served: " + feature.properties.Routes).addTo(map2);
         }
-      }).addTo(mymap) ;
+      }).addTo(map2) ;
     });
   </script>
 </body>
+<footer>
+	<p>References:</p>
+	<p>Pierce County Census Data: <a href="https://geohub.cityoftacoma.org/datasets/44d7c0a082b648e0a3c7909253d68236_0" target="_blank">City of Tacoma GeoHub</a></p>
+	<p>Pierce Transit Bus Routes: <a href = "https://gis-piercetransit.opendata.arcgis.com/datasets/bus-routes?geometry=-123.501%2C47.070%2C-121.328%2C47.396" target="_blank">Pierce Transit OpenData</a></p>
+	<p>Pierce Transit Bus Stops: <a href = "https://geohub.cityoftacoma.org/datasets/bus-stops-pierce-transit" target="_blank">City of Tacoma GeoHub</a></p>
+</footer>
